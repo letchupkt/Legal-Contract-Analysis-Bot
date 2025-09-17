@@ -91,37 +91,32 @@ Open your browser to: **http://localhost:5000**
 
 ```
 legal-contract-analysis-bot/
-├── 📱 Core Application
-│   ├── app.py                 # Main application entry point
-│   ├── flask_app.py          # Flask web server
-│   ├── setup.py              # Automated setup script
-│   └── test.py               # Comprehensive test suite
-│
-├── 🧠 AI & Processing
-│   ├── llm.py                # OpenAI GPT-4 integration
-│   ├── nlp.py                # Text processing & NLP
-│   ├── scoring.py            # Risk assessment logic
-│   └── utils.py              # Utility functions
-│
-├── 🎨 Frontend
-│   ├── templates/
-│   │   └── index.html        # Main UI template (with embedded CSS)
-│   └── static/
-│       └── style.css         # Additional CSS (optional)
-│
-├── 📄 Sample Data
-│   └── sample_contracts/
-│       ├── employment_sample.txt
-│       ├── service_sample.txt
-│       └── vendor_sample.txt
-│
-├── ⚙️ Configuration
-│   ├── requirements.txt      # Python dependencies
-│   ├── .env                  # Environment variables
-│   └── README.md            # This file
-│
-└── 📚 Documentation
-    └── DOCUMENTATION.md      # Complete technical docs
+├── .env.example
+├── README.md
+├── app.py
+├── flask_app.py
+├── llm.py
+├── nlp.py
+├── requirements.txt
+├── sample_contracts
+    ├── High Risk Land Agreement (1).pdf
+    ├── High Risk Land Agreement.docx
+    ├── High Risk Land Agreement.pdf
+    ├── employment_sample.txt
+    ├── employment_sample_risk_analysis.pdf
+    ├── sample_contract.docx
+    ├── service_sample.txt
+    └── vendor_sample.txt
+├── scoring.py
+├── setup.py
+├── setup_models.py
+├── static
+    └── style.css
+├── templates
+    ├── index.html
+    └── style.css
+└── utils.py
+
 ```
 
 ## 🔧 Technology Stack
@@ -251,13 +246,6 @@ This application provides informational analysis only and does not constitute le
 - **Ollama Gemma2 27B**: Google's powerful local model, excellent quality
 - **Ollama Llama3.1 8B**: Meta's latest, good balance of speed/quality
 - **Ollama Mistral**: Fast, efficient, good reasoning capabilities
-
-### Getting Help
-1. Run `python test.py` for diagnostics
-2. Run `python setup_models.py` for model setup
-3. Check browser console for JavaScript errors
-4. Review Flask logs for server issues
-5. Test with sample contracts first
 
 ---
 
