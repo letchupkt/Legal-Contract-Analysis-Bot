@@ -4,6 +4,9 @@ A complete AI-powered web application prototype that helps small business owners
 
 ## 🎯 Project Overview
 
+<img width="1857" height="969" alt="image" src="https://github.com/user-attachments/assets/e6c47f2b-7027-4682-9ec2-c951e5c7506f" />
+
+
 This is a **complete working prototype** built for hackathons and demonstrations. It features a professional Flask web application with AI-powered contract analysis, risk assessment, and multilingual support.
 
 ## 🚀 Quick Start
