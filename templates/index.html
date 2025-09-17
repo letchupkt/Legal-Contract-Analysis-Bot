@@ -1,0 +1,608 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>LegalRiskBot — AI-Powered Contract Analysis</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .speaker-icon {
+      display: inline-block;
+      transition: all 0.2s ease;
+      border-radius: 3px;
+      padding: 2px 4px;
+      cursor: pointer;
+      opacity: 0.7;
+    }
+
+    .speaker-icon:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+      transform: scale(1.1);
+      opacity: 1.0;
+    }
+
+    #summaryMicIcon {
+      transition: all 0.2s ease;
+      border-radius: 50%;
+      padding: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      margin-left: 8px;
+    }
+
+    #summaryMicIcon:hover {
+      background: rgba(76, 175, 80, 0.2);
+      transform: scale(1.1);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h1>⚖️ LegalRiskBot — Contract Analysis</h1>
+        <p class="lead">AI-Powered Comprehensive Contract Analysis & Risk Assessment for Indian SMEs (English, Hindi &
+          Tamil)</p>
+      </div>
+      <div class="disclaimer">
+        <strong>Disclaimer:</strong> This analysis is for informational purposes only and does not constitute legal
+        advice. Please consult with a qualified legal professional for specific legal matters.
+      </div>
+    </header>
+
+    <!-- Disclaimer -->
+
+
+    <!-- LEFT PANEL -->
+    <aside class="panel">
+      <div style="margin-bottom:16px;">
+        <label class="small muted">🔧 Analysis Settings</label>
+        <select id="modelSelect" style="margin-top:8px;">
+          <option value="gpt-4">🤖 GPT-4</option>
+          <option value="gpt-3.5-turbo">🤖 GPT-3.5 Turbo</option>
+          <option value="claude-3-sonnet">🎭 Claude 3 Sonnet</option>
+          <option value="claude-3-haiku">🎭 Claude 3 Haiku</option>
+          <option value="gemini-2.0-flash">⚡ Gemini 2.0 Flash</option>
+          <option value="gemini-pro">💎 Gemini Pro</option>
+          <option value="ollama-gemma:2b">💎 Ollama Gemma 2B</option>
+          <option value="ollama-gemma-2b-lawer:latest">🦙 Ollama Gemma 2B Lawer</option>
+          <option value="ollama-Gemma-2-2B-Indian-Law-Q8:latest">🌟 Ollama Gemma2 2B Indian Law Q8</option>
+        </select>
+        <select id="languageSelect" style="margin-top:8px;">
+          <option value="English">🌐 English</option>
+          <option value="Hindi">🌐 Hindi</option>
+          <option value="Tamil">🌐 Tamil</option>
+        </select>
+        
+      </div>
+      <label class="small muted" style="margin-top:12px;display:block;">📊 Max clauses to analyze: <span
+            id="clauseCount">6</span></label>
+      <input type="range" id="maxClauses" min="3" max="12" value="6" style="margin-top:4px;">
+
+      <label class="small muted">📄 Upload contract (PDF / DOCX / TXT)</label>
+
+      <input id="fileInput" type="file" accept=".pdf,.docx,.txt" style="margin-top:8px;" />
+
+      <div id="uploadStatus" class="small muted" style="margin-top:8px;"></div>
+
+      <div style="margin-top:16px;">
+        <button class="btn" id="analyzeBtn" disabled>🔍 Analyze Contract</button>
+        <button class="btn-ghost" id="summaryBtn" disabled>📄 Generate Summary</button>
+        <button class="btn-ghost" id="exportBtn" disabled>📊 Export Report</button>
+        <button class="btn-ghost" id="highlightBtn" disabled>🎯 View Highlighted</button>
+      </div>
+
+      <div class="progress" id="analysisProgress" style="display:none;">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+      <div id="progressText" class="small muted" style="margin-top:4px;"></div>
+    </aside>
+
+    <!-- RIGHT PANEL -->
+    <main class="main">
+      <div class="split">
+        <div>
+          <div class="panel">
+            <strong>📋 Contract Text</strong>
+            <div id="contractView" class="contract-view">
+              <div style="text-align:center;color:var(--muted);padding-top:100px;">
+                <div style="font-size:3rem;margin-bottom:1rem;">📄</div>
+                <div>No contract loaded yet</div>
+                <div class="small">Upload a PDF, DOCX, or TXT file to get started</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel" style="margin-top:12px">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+              <strong>📋 Contract Summary</strong>
+              <span id="summaryMicIcon" style="cursor: pointer; opacity: 0.5; font-size: 18px; display: none;"
+                title="Play summary audio">🎤</span>
+            </div>
+            <div id="summaryText" class="muted" style="margin-top:10px">No summary generated yet</div>
+          </div>
+        </div>
+
+        <aside>
+          <!-- Overall Risk Score -->
+          <div class="panel" id="riskScorePanel" style="display:none;">
+            <div class="metric-card">
+              <div class="metric-value" id="riskScore">0%</div>
+              <div>Overall Risk Score</div>
+            </div>
+          </div>
+
+          <!-- Analysis Results -->
+          <div class="panel card-list" id="clauseCards">
+            <div class="card muted" style="text-align:center;padding:40px 20px;">
+              <div style="font-size:2rem;margin-bottom:0.5rem;">🔍</div>
+              <div>No analysis yet</div>
+              <div class="small">Upload and analyze a contract to see results</div>
+            </div>
+          </div>
+
+          <!-- Q&A Section -->
+          <div class="panel" style="margin-top:12px">
+            <strong>💬 Ask a Question</strong>
+            <div class="small muted" style="margin-top:4px;">Ask specific questions about your contract clauses</div>
+            <textarea id="chatInput" placeholder="e.g., 'Can I terminate this contract early?'"
+              style="margin-top:8px;"></textarea>
+            <button class="btn" id="askBtn" style="margin-top:8px;" disabled>🚀 Ask AI</button>
+            <div id="chatOutput" class="muted" style="margin-top:8px;">No questions yet</div>
+          </div>
+        </aside>
+      </div>
+
+
+    </main>
+    <footer>
+      <div>Built by CodeSentinels</div>
+    </footer>
+  </div>
+
+  <script>
+    // Global variables
+    let analysisResults = null;
+    let contractUploaded = false;
+    let currentSpeech = null;
+
+    // Text-to-Speech functionality
+    function speakText(text, language = 'English') {
+      // Stop any current speech
+      if (currentSpeech) {
+        speechSynthesis.cancel();
+      }
+
+      // Create new speech synthesis
+      currentSpeech = new SpeechSynthesisUtterance(text);
+
+      // Set language based on selection
+      if (language === 'Hindi') {
+        currentSpeech.lang = 'hi-IN';
+      } else if (language === 'Tamil') {
+        currentSpeech.lang = 'ta-IN';
+      } else {
+        currentSpeech.lang = 'en-IN';
+      }
+
+      // Set speech properties
+      currentSpeech.rate = 0.8;
+      currentSpeech.pitch = 1.0;
+      currentSpeech.volume = 1.0;
+
+      // Speak the text
+      speechSynthesis.speak(currentSpeech);
+    }
+
+    // Stop all speech
+    function stopAllSpeech() {
+      if (speechSynthesis.speaking) {
+        speechSynthesis.cancel();
+      }
+      // Reset all speaker icons
+      document.querySelectorAll('.speaker-icon, [title="Playing..."]').forEach(icon => {
+        icon.innerHTML = '🔊';
+        icon.title = 'Click to listen';
+        icon.style.opacity = '0.7';
+        icon.style.color = '';
+        icon.style.transform = 'scale(1.0)';
+      });
+
+      // Reset summary microphone icon
+      const summaryMicIcon = document.getElementById('summaryMicIcon');
+      if (summaryMicIcon && (summaryMicIcon.title === 'Click to stop' || summaryMicIcon.title === 'Playing summary...')) {
+        summaryMicIcon.innerHTML = '🎤';
+        summaryMicIcon.title = 'Play summary audio';
+        summaryMicIcon.style.opacity = '0.7';
+        summaryMicIcon.style.color = '';
+        summaryMicIcon.style.transform = 'scale(1.0)';
+      }
+    }
+
+    // DOM elements
+    const fileInput = document.getElementById('fileInput');
+    const contractView = document.getElementById('contractView');
+    const clauseCards = document.getElementById('clauseCards');
+    const uploadStatus = document.getElementById('uploadStatus');
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    const summaryBtn = document.getElementById('summaryBtn');
+    const exportBtn = document.getElementById('exportBtn');
+    const highlightBtn = document.getElementById('highlightBtn');
+    const askBtn = document.getElementById('askBtn');
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+    const analysisProgress = document.getElementById('analysisProgress');
+    const riskScorePanel = document.getElementById('riskScorePanel');
+    const riskScore = document.getElementById('riskScore');
+    const maxClauses = document.getElementById('maxClauses');
+    const clauseCount = document.getElementById('clauseCount');
+
+    // Update clause count display
+    maxClauses.addEventListener('input', () => {
+      clauseCount.textContent = maxClauses.value;
+    });
+
+    // File upload handler
+    fileInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      uploadStatus.textContent = '🔄 Uploading and processing file...';
+      uploadStatus.style.color = 'var(--accent)';
+
+      try {
+        const response = await fetch('/upload', {
+          method: 'POST',
+          body: formData
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          contractView.innerHTML = `<div style="white-space: pre-wrap;">${result.text_preview}</div>`;
+          uploadStatus.innerHTML = `✅ <strong>${result.filename}</strong> uploaded successfully (${result.text_length} characters)`;
+          uploadStatus.style.color = 'var(--safe)';
+
+          // Enable buttons
+          analyzeBtn.disabled = false;
+          contractUploaded = true;
+        } else {
+          throw new Error(result.error);
+        }
+      } catch (error) {
+        uploadStatus.textContent = `❌ Error: ${error.message}`;
+        uploadStatus.style.color = 'var(--danger)';
+        contractUploaded = false;
+      }
+    });
+
+    // Analysis handler
+    analyzeBtn.addEventListener('click', async () => {
+      if (!contractUploaded) {
+        alert('Please upload a contract first!');
+        return;
+      }
+
+      // Show progress
+      analysisProgress.style.display = 'block';
+      progressBar.style.width = '0%';
+      progressText.textContent = 'Starting analysis...';
+      analyzeBtn.disabled = true;
+
+      const requestData = {
+        max_clauses: parseInt(maxClauses.value),
+        model: document.getElementById('modelSelect').value,
+        language: document.getElementById('languageSelect').value
+      };
+
+      try {
+        // Simulate progress updates
+        let progress = 0;
+        const progressInterval = setInterval(() => {
+          progress += Math.random() * 15;
+          if (progress > 90) progress = 90;
+          progressBar.style.width = progress + '%';
+          progressText.textContent = `Analyzing clauses... ${Math.round(progress)}%`;
+        }, 500);
+
+        const response = await fetch('/analyze', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(requestData)
+        });
+
+        const result = await response.json();
+        clearInterval(progressInterval);
+
+        if (result.success) {
+          // Complete progress
+          progressBar.style.width = '100%';
+          progressText.textContent = '✅ Analysis complete!';
+
+          // Store results
+          analysisResults = result.results;
+
+          // Display results
+          displayAnalysisResults(result);
+
+          // Enable other buttons
+          summaryBtn.disabled = false;
+          exportBtn.disabled = false;
+          highlightBtn.disabled = false;
+          askBtn.disabled = false;
+
+          setTimeout(() => {
+            analysisProgress.style.display = 'none';
+          }, 2000);
+        } else {
+          throw new Error(result.error);
+        }
+      } catch (error) {
+        progressText.textContent = `❌ Error: ${error.message}`;
+        progressText.style.color = 'var(--danger)';
+      } finally {
+        analyzeBtn.disabled = false;
+      }
+    });
+
+    // Display analysis results
+    function displayAnalysisResults(result) {
+      // Show risk score
+      riskScore.textContent = result.overall_score + '%';
+      riskScorePanel.style.display = 'block';
+
+      // Display clause cards
+      const language = document.getElementById('languageSelect').value;
+      clauseCards.innerHTML = '';
+
+      result.results.forEach((clause, index) => {
+        const riskLevel = clause.risk.toLowerCase();
+        // Now explanation is directly in the selected language
+        const explanation = clause.explanation;
+
+        const card = document.createElement('div');
+        card.className = `card risk-${riskLevel}`;
+        card.innerHTML = `
+          <div class="risk-badge risk-${riskLevel}">${clause.risk} Risk</div>
+          <div><strong>Clause ${index + 1}:</strong> ${clause.clause.substring(0, 200)}${clause.clause.length > 200 ? '...' : ''}</div>
+          <div style="margin-top: 8px;"><strong>📝 Explanation:</strong> ${explanation}</div>
+          <div style="margin-top: 8px;"><strong>💡 Suggestion:</strong> ${clause.suggestion}</div>
+        `;
+        clauseCards.appendChild(card);
+      });
+    }
+
+    // Summary generation
+    summaryBtn.addEventListener('click', async () => {
+      summaryBtn.disabled = true;
+      summaryBtn.textContent = '🔄 Generating...';
+
+      try {
+        const response = await fetch('/summary', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            language: document.getElementById('languageSelect').value
+          })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          // Update summary text
+          document.getElementById('summaryText').innerHTML = `<div style="white-space: pre-wrap;">${result.summary}</div>`;
+
+          // Show and setup microphone icon for summary
+          const summaryMicIcon = document.getElementById('summaryMicIcon');
+          const language = document.getElementById('languageSelect').value;
+
+          summaryMicIcon.style.display = 'inline-block';
+          summaryMicIcon.style.opacity = '0.7';
+          summaryMicIcon.style.transition = 'all 0.2s ease';
+
+          // Remove any existing click listeners by cloning the element
+          const newMicIcon = summaryMicIcon.cloneNode(true);
+          summaryMicIcon.parentNode.replaceChild(newMicIcon, summaryMicIcon);
+
+          // Add hover effects
+          newMicIcon.addEventListener('mouseenter', () => {
+            newMicIcon.style.opacity = '1.0';
+            newMicIcon.style.transform = 'scale(1.1)';
+          });
+
+          newMicIcon.addEventListener('mouseleave', () => {
+            if (newMicIcon.title !== 'Click to stop') {
+              newMicIcon.style.opacity = '0.7';
+              newMicIcon.style.transform = 'scale(1.0)';
+            }
+          });
+
+          // Add click handler for summary audio (toggle play/stop)
+          newMicIcon.addEventListener('click', () => {
+            // Check if currently playing
+            if (speechSynthesis.speaking || newMicIcon.title === 'Playing summary...') {
+              // Stop current speech
+              speechSynthesis.cancel();
+
+              // Reset icon to play state
+              newMicIcon.innerHTML = '🎤';
+              newMicIcon.title = 'Play summary audio';
+              newMicIcon.style.opacity = '0.7';
+              newMicIcon.style.color = '';
+              newMicIcon.style.transform = 'scale(1.0)';
+              return;
+            }
+
+            // Start playing - stop any other speech first
+            stopAllSpeech();
+
+            // Update icon to playing state
+            newMicIcon.innerHTML = '🔇';
+            newMicIcon.title = 'Click to stop';
+            newMicIcon.style.opacity = '1.0';
+            newMicIcon.style.color = '#4CAF50';
+
+            // Create speech for summary
+            const summaryText = result.summary;
+            const speech = new SpeechSynthesisUtterance(summaryText);
+
+            // Set language
+            if (language === 'Hindi') {
+              speech.lang = 'hi-IN';
+            } else if (language === 'Tamil') {
+              speech.lang = 'ta-IN';
+            } else {
+              speech.lang = 'en-IN';
+            }
+
+            // Set speech properties for longer content
+            speech.rate = 0.9;
+            speech.pitch = 1.0;
+            speech.volume = 1.0;
+
+            // Handle speech end
+            speech.onend = () => {
+              newMicIcon.innerHTML = '🎤';
+              newMicIcon.title = 'Play summary audio';
+              newMicIcon.style.opacity = '0.7';
+              newMicIcon.style.color = '';
+              newMicIcon.style.transform = 'scale(1.0)';
+            };
+
+            speech.onerror = () => {
+              newMicIcon.innerHTML = '🎤';
+              newMicIcon.title = 'Play summary audio';
+              newMicIcon.style.opacity = '0.7';
+              newMicIcon.style.color = '';
+              newMicIcon.style.transform = 'scale(1.0)';
+            };
+
+            // Speak the summary
+            speechSynthesis.speak(speech);
+            currentSpeech = speech;
+          });
+
+        } else {
+          throw new Error(result.error);
+        }
+      } catch (error) {
+        document.getElementById('summaryText').textContent = `Error: ${error.message}`;
+      } finally {
+        summaryBtn.disabled = false;
+        summaryBtn.textContent = '📄 Generate Summary';
+      }
+    });
+
+    // PDF export
+    exportBtn.addEventListener('click', () => {
+      window.open('/export-pdf', '_blank');
+    });
+
+    // Highlight view
+    highlightBtn.addEventListener('click', async () => {
+      try {
+        const response = await fetch('/highlight');
+        const result = await response.json();
+
+        if (result.success) {
+          const newWindow = window.open('', '_blank');
+          newWindow.document.write(
+            '<html><head><title>Contract Highlighting</title>' +
+            '<style>body { font-family: monospace; padding: 20px; background: #0f1724; color: #e6eef8; }</style>' +
+            '</head><body><h2>Contract Risk Highlighting</h2>' +
+            result.highlighted_html +
+            '</body></html>'
+          );
+        } else {
+          alert('Error: ' + result.error);
+        }
+      } catch (error) {
+        alert('Error: ' + error.message);
+      }
+    });
+    '.controls {' +
+      'position: fixed;' +
+      'top: 20px;' +
+      'right: 20px;' +
+      'z-index: 1000;' +
+      '}' +
+      '.btn {' +
+      'background: #4CAF50;' +
+      'color: white;' +
+      'border: none;' +
+      'padding: 10px 15px;' +
+      'border-radius: 5px;' +
+      'cursor: pointer;' +
+      'margin-left: 10px;' +
+      'font-size: 14px;' +
+      // Q&A handler
+      askBtn.addEventListener('click', async () => {
+        const question = document.getElementById('chatInput').value.trim();
+        if (!question) {
+          alert('Please enter a question!');
+          return;
+        }
+
+        askBtn.disabled = true;
+        askBtn.textContent = '🤔 Thinking...';
+        document.getElementById('chatOutput').textContent = 'AI is processing your question...';
+
+        try {
+          const response = await fetch('/ask', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              question: question,
+              language: document.getElementById('languageSelect').value
+            })
+          });
+
+          const result = await response.json();
+
+          if (result.success) {
+            const responseDiv = document.createElement('div');
+            responseDiv.style.background = 'linear-gradient(180deg, rgba(154,230,180,0.1), rgba(154,230,180,0.05))';
+            responseDiv.style.border = '1px solid rgba(154,230,180,0.2)';
+            responseDiv.style.borderRadius = 'var(--radius)';
+            responseDiv.style.padding = '12px';
+            responseDiv.style.marginTop = '8px';
+            responseDiv.innerHTML = '<strong>🤖 AI Response:</strong><br><br>' + result.answer;
+
+            document.getElementById('chatOutput').innerHTML = '';
+            document.getElementById('chatOutput').appendChild(responseDiv);
+            document.getElementById('chatInput').value = '';
+          } else {
+            throw new Error(result.error);
+          }
+        } catch (error) {
+          document.getElementById('chatOutput').textContent = 'Error: ' + error.message;
+        } finally {
+          askBtn.disabled = false;
+          askBtn.textContent = '🚀 Ask AI';
+        }
+      });
+
+    // Allow Enter key in textarea to submit question
+    document.getElementById('chatInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        if (!askBtn.disabled) {
+          askBtn.click();
+        }
+      }
+    });
+  </script>
+</body>
+
+</html>
